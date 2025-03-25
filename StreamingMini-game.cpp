@@ -17,7 +17,7 @@ int delta_time_ms = 50;
 /// <summary>
 /// вероятность появления препятствия на пути
 /// </summary>
-double cars_spawn_probability = 0.05;
+double cars_spawn_probability_step = 0.05;
 std::default_random_engine re;
 
 /// <summary>
@@ -76,8 +76,17 @@ static void Update()
     //движение и появление препятствий
     auto get_next_fragment = []() 
         { 
+            static double cars_spawn_probability = 0.0;
             std::uniform_real_distribution<double> unif(0.0, 1.0);
-            return unif(re) <= cars_spawn_probability ? car : empty; 
+            if (unif(re) <= cars_spawn_probability)
+            {
+                //при появлении препятствий, вероятность их спавна уменьшается так, что бы они не появлялись как минимум 2 хода
+                cars_spawn_probability = -cars_spawn_probability_step * 2;
+                return car;
+            }
+                //чем дольше не появляются препятствия, тем больше вероятность их появления
+            cars_spawn_probability += cars_spawn_probability_step;
+            return empty;
         };
     line1.pop_front();
     line1.push_back(get_next_fragment());
